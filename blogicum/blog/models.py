@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db import models
-
+from django.urls import reverse
 
 User = get_user_model()
 
@@ -98,7 +98,25 @@ class Post(CreatedAndPublishedModel):
 class PostCreate(models.Model):
     title = models.CharField('Заголовок',max_length=20)
     text = models.TextField('Описание')
-    pub_date = models.DateField('Дата и время публикации')
+    pub_date = models.DateTimeField('Дата и время публикации')
     location = models.CharField('Локация',blank=True,max_length=20)
     image = models.ImageField('Фото',upload_to='posts_images',blank=True)
+
+    def get_absolute_url(self):
+        return reverse('blog:profile', kwargs={'username': self.username}) 
+
+    
+
+class Comment(models.Model):
+    text = models.TextField('Комментарий')
+    post = models.ForeignKey(
+        Post,
+        on_delete=models.CASCADE,
+        related_name='comments'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    author = models.ForeignKey(User,on_delete=models.CASCADE)
+
+    class Meta:
+        ordering = ('created_at',)
 

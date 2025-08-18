@@ -1,9 +1,16 @@
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404,redirect, render
 from django.utils import timezone as tz
+from django.views.generic import CreateView,ListView,UpdateView,DeleteView
+from django.urls import reverse_lazy
+from django.contrib.auth import get_user_model
+from django.contrib.auth.mixins import LoginRequiredMixin,UserPassesTestMixin
 
-from blog.models import Post, Category,PostCreate
-from .forms import PostForm
+from blog.models import Post, Category
+from .forms import PostForm,CommentForm
+
+
+User = get_user_model()
 
 
 def get_filter_posts(posts=Post.objects.all()):
@@ -13,15 +20,13 @@ def get_filter_posts(posts=Post.objects.all()):
         category__is_published=True)
 
 
-def index(request):
+class IndexView(ListView):
+    model = Post
     template_name = 'blog/index.html'
-    posts = get_filter_posts()
-    paginator = Paginator(posts,10)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-    context = {'page_obj': page_obj}
+    paginate_by = 10
 
-    return render(request, template_name, context)
+    def get_queryset(self):
+        return get_filter_posts()
 
 
 def post_detail(request, post_id):
@@ -51,30 +56,45 @@ def category_posts(request, category_slug):
     context = {'category': category, 'page_obj': page_obj}
     return render(request, template_name, context)
 
+class PostMixin:
+    model = Post
+    exclude = ('author',)
 
-def create_post(request,pk=None):
-    if pk is not None:
-        instance = get_object_or_404(PostCreate,pk=pk)
-    else:
-        instance=None
+class PostFormMixin:
+    form_class = PostForm
+    template_name = 'blog/create.html'
 
-    form = PostForm(
-        request.POST or None,
-        files=request.FILES or None,
-        instance=instance)
+class OnlyAuthorMixin():
     
-    context = {'form': form}
+    def test_func(self):
+        object = self.get_object()
+        return object.author == self.request.user
+
+
+class PostCreateView(PostMixin,PostFormMixin,LoginRequiredMixin,CreateView,OnlyAuthorMixin):
+    
+    def form_valid(self,form):
+        form.instance.author = self.request.user
+        return super().form_valid(form)
+
+class PostUpdateView(PostMixin,PostFormMixin,LoginRequiredMixin,UpdateView,OnlyAuthorMixin):
+    pass
+
+class PostDeleteView(PostMixin,LoginRequiredMixin,DeleteView,OnlyAuthorMixin):
+    pass
+
+def add_comment(request,pk):
+    post = get_object_or_404(Post,pk=pk)
+    form = CommentForm(request.POST)
+
     if form.is_valid():
-        form.save()
-    return render(request,'blog/create.html',context)
+        comment = form.save(commit=False)
+        comment.author = request.user
+        comment.post = post
+        comment.save()
+    return redirect('post:detail',pk=pk)
 
-
-def delete_post(request,pk):
-    instance = get_object_or_404(PostCreate,pk=pk)
-    form = PostForm(instance=instance)
-    context = {'form':form}
-
-    if request.method == 'POST':
-        instance.delete()
-        return redirect('blog:index')
-    return render(request,'blog/create.html',context)
+def user_profile(request,username):
+    profile = get_object_or_404(User,username=username)
+    context = {'profile':profile}
+    return render(request,'blog/profile.html',context)
