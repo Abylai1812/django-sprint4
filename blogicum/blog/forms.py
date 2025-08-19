@@ -1,12 +1,12 @@
 from django import forms
 
-from .models import PostCreate,Comment
+from .models import Post,Comment
 
 class PostForm(forms.ModelForm):
 
     class Meta:
-        model = PostCreate
-        fields = '__all__'
+        model = Post
+        exclude = ('author',)
 
         widgets= {
             'pub_date':forms.DateInput(attrs={'type':'date'})

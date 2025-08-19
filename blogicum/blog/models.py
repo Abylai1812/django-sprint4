@@ -86,6 +86,7 @@ class Post(CreatedAndPublishedModel):
         related_name='posts',
         verbose_name='Категория'
     )
+    image = models.ImageField('Фото',upload_to='posts_images',blank=True)
 
     class Meta:
         ordering = ('-pub_date'),
@@ -95,18 +96,10 @@ class Post(CreatedAndPublishedModel):
     def __str__(self):
         return self.title[:30]
     
-class PostCreate(models.Model):
-    title = models.CharField('Заголовок',max_length=20)
-    text = models.TextField('Описание')
-    pub_date = models.DateTimeField('Дата и время публикации')
-    location = models.CharField('Локация',blank=True,max_length=20)
-    image = models.ImageField('Фото',upload_to='posts_images',blank=True)
-
     def get_absolute_url(self):
-        return reverse('blog:profile', kwargs={'username': self.username}) 
+        return reverse('blog:post_detail', kwargs={'post_id': self.pk}) 
 
     
-
 class Comment(models.Model):
     text = models.TextField('Комментарий')
     post = models.ForeignKey(
@@ -119,4 +112,7 @@ class Comment(models.Model):
 
     class Meta:
         ordering = ('created_at',)
+    
+    def get_absolute_url(self):
+        return reverse('blog:post_detail', kwargs={'post_id': self.post.pk}) 
 
