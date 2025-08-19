@@ -26,8 +26,7 @@
                   href="{% url 'blog:profile' user.username %}">{{ user.username }}</a></button>
               <form method="post" action="{% url 'logout' %}" class="d-inline">
                 {% csrf_token %}
-                <button type="button" class="btn btn-outline-primary">
-                  <a class="text-decoration-none text-reset" href="{% url 'logout' %}">Выйти</a></button>
+                <button type="submit" class="btn btn-outline-primary">Выйти</button>
               </form>
             </div>
           {% else %}

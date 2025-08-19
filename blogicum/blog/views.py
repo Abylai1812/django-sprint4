@@ -100,11 +100,17 @@ class PostDeleteView(PostMixin,LoginRequiredMixin,DeleteView,OnlyAuthorMixin):
 @login_required
 def user_profile(request,username):
     profile = get_object_or_404(User,username=username)
-    posts = Post.objects.filter(author=profile).annotate(
+    posts = Post.objects.filter(
+        author=profile).order_by('-pub_date').annotate(
             comment_count=Count('comments'))
+    
+    paginator = Paginator(posts,10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     context = {
         'profile':profile,
-        'page_obj':posts
+        'page_obj':page_obj
         }
     return render(request,'blog/profile.html',context)
 
