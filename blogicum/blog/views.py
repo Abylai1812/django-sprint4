@@ -40,8 +40,7 @@ def post_detail(request, post_id):
         get_filter_posts(),
         pk=post_id
     )
-    form=CommentForm
-
+    
     context = {
         'post': post,
         'form':form,
@@ -97,7 +96,7 @@ class PostDeleteView(PostMixin,LoginRequiredMixin,DeleteView,OnlyAuthorMixin):
     template_name = 'blog/create.html'
     success_url = reverse_lazy('blog:index') 
 
-@login_required
+
 def user_profile(request,username):
     profile = get_object_or_404(User,username=username)
     posts = Post.objects.filter(
@@ -110,6 +109,7 @@ def user_profile(request,username):
 
     context = {
         'profile':profile,
+        'username':profile.username,
         'page_obj':page_obj
         }
     return render(request,'blog/profile.html',context)
@@ -118,10 +118,12 @@ class ProfileUpdateView(LoginRequiredMixin,UpdateView):
     model = User
     fields = ['username','first_name','last_name','email'] 
     template_name = 'blog/user.html'
-    success_url = reverse_lazy('blog:index')
 
     def get_object(self, queryset=None):
         return self.request.user
+    
+    def get_success_url(self):
+        return reverse('blog:profile',kwargs={'username':self.request.user.username})
     
 @login_required
 def add_comment(request,post_id):
@@ -137,16 +139,17 @@ def add_comment(request,post_id):
     return redirect('blog:post_detail',post_id=post_id)
 
 
-class CommentUpdateView(UpdateView):
+class CommentMixin():
     model = Comment
     pk_url_kwarg = 'comment_id'
-    form_class = CommentForm
     template_name = 'blog/comment.html'
 
-class CommentDeleteView(DeleteView):
-    model = Comment
-    pk_url_kwarg = 'comment_id'
-    template_name = 'blog/comment.html'
+
+class CommentUpdateView(UpdateView,CommentMixin):
+    form_class = CommentForm
+   
+
+class CommentDeleteView(DeleteView,CommentMixin):
 
     def get_success_url(self):
         return self.object.get_absolute_url()
