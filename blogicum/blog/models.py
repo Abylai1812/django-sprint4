@@ -115,5 +115,4 @@ class Comment(models.Model):
         ordering = ('created_at',)
 
     def get_absolute_url(self):
-
         return reverse('blog:post_detail', kwargs={'post_id': self.post.pk})

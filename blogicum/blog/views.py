@@ -82,7 +82,7 @@ class PostMixin():
     exclude = ('author',)
 
 
-class PostCreateView(LoginRequiredMixin, CreateView, PostMixin):
+class PostCreateView(LoginRequiredMixin,PostMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.author = self.request.user
@@ -90,7 +90,7 @@ class PostCreateView(LoginRequiredMixin, CreateView, PostMixin):
         return redirect('blog:profile', username=self.request.user.username)
 
 
-class PostUpdateView(OnlyAuthorMixin, UpdateView, PostMixin):
+class PostUpdateView(OnlyAuthorMixin, PostMixin, UpdateView):
     pk_url_kwarg = 'post_id'
 
 
@@ -122,10 +122,14 @@ def user_profile(request, username):
     return render(request, 'blog/profile.html', context)
 
 
-class ProfileUpdateView(OnlyAuthorMixin, UpdateView):
+class ProfileUpdateView(UserPassesTestMixin, UpdateView):
     model = User
     fields = ['username', 'first_name', 'last_name', 'email']
     template_name = 'blog/user.html'
+
+    def test_func(self):
+        obj = self.get_object()
+        return obj.username == self.request.user.username
 
     def get_object(self, queryset=None):
         return self.request.user
@@ -137,19 +141,39 @@ class ProfileUpdateView(OnlyAuthorMixin, UpdateView):
         )
 
 
-@login_required
-def add_comment(request, post_id):
-    post = get_object_or_404(Post, pk=post_id)
-    form = CommentForm(request.POST)
+# class CommentCreateView(LoginRequiredMixin, CreateView):
+    # model = Comment
+    # form_class = CommentForm
+    # template_name = 'blog/comment.html'
+    
+    # def form_valid(self, form):
+    #     post = get_object_or_404(Post, pk=self.kwargs['post_id'])
+    #     comment = form.save(commit=False)
+    #     comment.author = self.request.user
+    #     comment.post = post
+    #     comment.save()
+    #     return redirect('blog:post_detail', post_id=post.pk)
+    
+    # def get_success_url(self):
+    #     return reverse('blog:post_detail', kwargs={'post_id': self.kwargs['post_id']})
 
-    if form.is_valid():
-        comment = form.save(commit=False)
-        comment.author = request.user
-        comment.post = post
-        comment.save()
+class CommentCreateView(LoginRequiredMixin, CreateView):
+    post = None
+    model = Comment
+    form_class = CommentForm
+    template_name = 'blog/comment.html'
 
-    return redirect('blog:post_detail', post_id=post_id)
+    def dispatch(self, request, *args, **kwargs):
+        self.post = get_object_or_404(Post, pk=self.kwargs['post_id'])
+        return super().dispatch(request, *args, **kwargs)
 
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        form.instance.post = self.post
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse('blog:post_detail', kwargs={'post_id': self.kwargs['post_id']})
 
 class CommentUpdateView(UpdateView):
     model = Comment
