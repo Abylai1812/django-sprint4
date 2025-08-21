@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from django.db import models
 from django.urls import reverse
 
+
 User = get_user_model()
 
 
@@ -86,7 +87,7 @@ class Post(CreatedAndPublishedModel):
         related_name='posts',
         verbose_name='Категория'
     )
-    image = models.ImageField('Фото',upload_to='posts_images',blank=True)
+    image = models.ImageField('Фото', upload_to='posts_images', blank=True)
 
     class Meta:
         ordering = ('-pub_date'),
@@ -95,11 +96,11 @@ class Post(CreatedAndPublishedModel):
 
     def __str__(self):
         return self.title[:30]
-    
-    def get_absolute_url(self):
-        return reverse('blog:post_detail', kwargs={'post_id': self.pk}) 
 
-    
+    def get_absolute_url(self):
+        return reverse('blog:post_detail', kwargs={'post_id': self.pk})
+
+
 class Comment(models.Model):
     text = models.TextField('Комментарий')
     post = models.ForeignKey(
@@ -108,11 +109,11 @@ class Comment(models.Model):
         related_name='comments'
     )
     created_at = models.DateTimeField(auto_now_add=True)
-    author = models.ForeignKey(User,on_delete=models.CASCADE)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
 
     class Meta:
         ordering = ('created_at',)
-    
-    def get_absolute_url(self):
-        return reverse('blog:post_detail', kwargs={'post_id': self.post.pk}) 
 
+    def get_absolute_url(self):
+
+        return reverse('blog:post_detail', kwargs={'post_id': self.post.pk})

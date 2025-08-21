@@ -35,7 +35,6 @@ class IndexView(ListView):
 
 def post_detail(request, post_id):
     form = CommentForm()
-    template_name = 'blog/detail.html'
     post = get_object_or_404(
         get_filter_posts(),
         pk=post_id
@@ -47,7 +46,7 @@ def post_detail(request, post_id):
         'comments':Comment.objects.filter(post=post).select_related('author')
         }
     
-    return render(request, template_name, context)
+    return render(request, 'blog/detail.html', context)
 
 
 def category_posts(request, category_slug):
@@ -63,6 +62,7 @@ def category_posts(request, category_slug):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     context = {'category': category, 'page_obj': page_obj}
+    
     return render(request, template_name, context)
 
 class PostMixin:
