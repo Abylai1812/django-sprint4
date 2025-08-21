@@ -1,15 +1,16 @@
-from django.core.paginator import Paginator
-from django.shortcuts import get_object_or_404,redirect, render
-from django.utils import timezone as tz
-from django.views.generic import CreateView,ListView,UpdateView,DeleteView
-from django.urls import reverse_lazy,reverse
 from django.contrib.auth import get_user_model
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.paginator import Paginator
 from django.db.models import Count
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse, reverse_lazy
+from django.utils import timezone as tz
+from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
-from blog.models import Post, Category, Comment
-from .forms import PostForm,CommentForm
+# Локальные импорты
+from blog.models import Category, Comment, Post
+from .forms import CommentForm, PostForm
 
 
 User = get_user_model()
@@ -44,7 +45,7 @@ def post_detail(request, post_id):
         'post': post,
         'form':form,
         'comments':Comment.objects.filter(post=post).select_related('author')
-        }
+    }
     
     return render(request, 'blog/detail.html', context)
 
