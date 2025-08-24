@@ -122,7 +122,7 @@ def user_profile(request, username):
     return render(request, 'blog/profile.html', context)
 
 
-class ProfileUpdateView(UserPassesTestMixin,UpdateView):
+class ProfileUpdateView(LoginRequiredMixin,UserPassesTestMixin,UpdateView):
     model = User
     fields = ['username', 'first_name', 'last_name', 'email']
     template_name = 'blog/user.html'
@@ -147,7 +147,7 @@ class CommentCreateView(LoginRequiredMixin, CreateView):
     template_name = 'blog/comment.html'
     
     def form_valid(self, form):
-        post = get_object_or_404(Post, pk=self.kwargs['post_id'])
+        post = get_object_or_404(get_filter_posts(), pk=self.kwargs['post_id'])
         comment = form.save(commit=False)
         comment.author = self.request.user
         comment.post = post
