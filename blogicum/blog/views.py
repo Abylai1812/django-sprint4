@@ -10,7 +10,7 @@ from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
 # Локальные импорты
 from blog.models import Category, Comment, Post
-from .forms import CommentForm, PostForm
+from .forms import CommentForm, PostForm, UserForm
 
 
 User = get_user_model()
@@ -86,8 +86,10 @@ class PostCreateView(LoginRequiredMixin,PostMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.author = self.request.user
-        super().form_valid(form)
-        return redirect('blog:profile', username=self.request.user.username)
+        return super().form_valid(form)
+        
+    def get_success_url(self):
+        return reverse('blog:profile', kwargs={'username': self.request.user.username})
 
 
 class PostUpdateView(OnlyAuthorMixin, PostMixin, UpdateView):
@@ -122,9 +124,9 @@ def user_profile(request, username):
     return render(request, 'blog/profile.html', context)
 
 
-class ProfileUpdateView(LoginRequiredMixin,UserPassesTestMixin,UpdateView):
+class ProfileUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = User
-    fields = ['username', 'first_name', 'last_name', 'email']
+    form_class = UserForm
     template_name = 'blog/user.html'
 
     def test_func(self):
@@ -132,13 +134,20 @@ class ProfileUpdateView(LoginRequiredMixin,UserPassesTestMixin,UpdateView):
         return obj.username == self.request.user.username
 
     def get_object(self, queryset=None):
-        return self.request.user
+        username = self.kwargs.get('username')
+        return get_object_or_404(User, username=username)
+
+    def form_valid(self, form):
+        print("Form data:", form.cleaned_data)  # Для отладки
+        if not form.is_valid():
+            print("Form errors:", form.errors)  # Для отладки
+        else:
+            print("Form is valid, saving changes")
+            form.save()
+        return super().form_valid(form)
 
     def get_success_url(self):
-        return reverse(
-            'blog:profile',
-            kwargs={'username': self.request.user.username}
-        )
+        return reverse('blog:profile', kwargs={'username': self.request.user.username})
 
 
 class CommentCreateView(LoginRequiredMixin, CreateView):
@@ -152,7 +161,7 @@ class CommentCreateView(LoginRequiredMixin, CreateView):
         comment.author = self.request.user
         comment.post = post
         comment.save()
-        return redirect('blog:post_detail', post_id=post.pk)
+        return super().form_valid(form)
     
     def get_success_url(self):
         return reverse('blog:post_detail', kwargs={'post_id': self.kwargs['post_id']})

@@ -156,3 +156,4 @@ STATICFILES_DIRS = [
     BASE_DIR / 'static_dev',
 ]
 
+AUTH_USER_MODEL = 'auth.User'

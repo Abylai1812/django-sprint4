@@ -111,7 +111,7 @@ class Comment(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
 
     class Meta:
-        ordering = ('created_at')
+        ordering = ('created_at',)
 
     def get_absolute_url(self):
         return reverse('blog:post_detail', kwargs={'post_id': self.post.pk})
