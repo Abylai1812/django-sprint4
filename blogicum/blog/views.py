@@ -7,7 +7,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone as tz
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
-from django.http import HttpResponseForbidden
+
 
 # Локальные импорты
 from blog.models import Category, Comment, Post
@@ -76,37 +76,6 @@ class OnlyAuthorMixin(UserPassesTestMixin):
         return obj.author == self.request.user
     
 
-class LoginRequiredAndPostAuthorMixin(UserPassesTestMixin):
-    
-    def test_func(self):
-        if not self.request.user.is_authenticated:
-            return False
-        obj = self.get_object()
-        return obj.author == self.request.user
-    
-    def handle_no_permission(self):
-        if not self.request.user.is_authenticated:
-            post_id = self.kwargs.get('post_id')
-            return redirect('blog:post_detail', post_id=post_id)
-        return HttpResponseForbidden("У вас нет прав для этого действия")
-
-
-class LoginRequiredAndCommentAuthorMixin(UserPassesTestMixin):
-    
-    def test_func(self):
-        if not self.request.user.is_authenticated:
-            return False
-        obj = self.get_object()
-        return obj.author == self.request.user
-    
-    def handle_no_permission(self):
-        if not self.request.user.is_authenticated:
-            comment_id = self.kwargs.get('comment_id')
-            comment = get_object_or_404(Comment, pk=comment_id)
-            return redirect('blog:post_detail', post_id=comment.post_id)
-        return HttpResponseForbidden("У вас нет прав для этого действия")
-
-
 class PostMixin():
     model = Post
     form_class = PostForm
@@ -124,16 +93,28 @@ class PostCreateView(LoginRequiredMixin, PostMixin, CreateView):
         return reverse('blog:profile', kwargs={'username': self.request.user.username})
 
 
-class PostUpdateView(LoginRequiredAndPostAuthorMixin, PostMixin, UpdateView):
-    pk_url_kwarg = 'post_id'
-
-
-class PostDeleteView(LoginRequiredAndPostAuthorMixin, DeleteView):
+class PostUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Post
     pk_url_kwarg = 'post_id'
-    success_url = reverse_lazy('blog:index')
-    exclude = ('author',)
+    form_class = PostForm
+    template_name = 'blog/create.html'
 
+    def test_func(self):
+        return self.get_object().author == self.request.user
+
+    def get_success_url(self):
+        return reverse('blog:post_detail', kwargs={'post_id': self.object.pk})
+
+class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    model = Post
+    pk_url_kwarg = 'post_id'
+
+    def test_func(self):
+        return self.get_object().author == self.request.user
+
+    def get_success_url(self):
+        return reverse('blog:index')
+    
 
 def user_profile(request, username):
     profile = get_object_or_404(User, username=username)
@@ -199,17 +180,24 @@ class CommentCreateView(LoginRequiredMixin, CreateView):
         return reverse('blog:post_detail', kwargs={'post_id': self.kwargs['post_id']})
 
 
-class CommentUpdateView(LoginRequiredAndCommentAuthorMixin, UpdateView):
-    model = Comment
-    form_class = CommentForm
-    pk_url_kwarg = 'comment_id'
-    template_name = 'blog/comment.html'
-
-
-class CommentDeleteView(LoginRequiredAndCommentAuthorMixin, DeleteView):
+class CommentUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Comment
     pk_url_kwarg = 'comment_id'
-    template_name = 'blog/comment.html'
+    fields = ['text']
+
+    def test_func(self):
+        return self.get_object().author == self.request.user
 
     def get_success_url(self):
-        return self.object.get_absolute_url()
+        return reverse('blog:post_detail', kwargs={'post_id': self.object.post.pk})
+
+
+class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    model = Comment
+    pk_url_kwarg = 'comment_id'
+
+    def test_func(self):
+        return self.get_object().author == self.request.user
+
+    def get_success_url(self):
+        return reverse('blog:post_detail', kwargs={'post_id': self.object.post.pk})
