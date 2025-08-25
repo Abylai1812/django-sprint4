@@ -93,28 +93,39 @@ class PostCreateView(LoginRequiredMixin, PostMixin, CreateView):
         return reverse('blog:profile', kwargs={'username': self.request.user.username})
 
 
-class PostUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
-    model = Post
+class PostUpdateView(LoginRequiredMixin, UserPassesTestMixin, PostMixin, UpdateView):
     pk_url_kwarg = 'post_id'
-    form_class = PostForm
-    template_name = 'blog/create.html'
-
+    raise_exception = False
+    login_url = None
+    
     def test_func(self):
-        return self.get_object().author == self.request.user
+        if not self.request.user.is_authenticated:
+            return True
+        obj = self.get_object()
+        return obj.author == self.request.user
+    
+    def get_login_url(self):
+        post_id = self.kwargs.get('post_id') or self.get_object().pk
+        return reverse('blog:post_detail', kwargs={'post_id': post_id})
 
-    def get_success_url(self):
-        return reverse('blog:post_detail', kwargs={'post_id': self.object.pk})
 
 class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Post
     pk_url_kwarg = 'post_id'
-
-    def test_func(self):
-        return self.get_object().author == self.request.user
-
-    def get_success_url(self):
-        return reverse('blog:index')
+    success_url = reverse_lazy('blog:index')
+    raise_exception = False
+    login_url = None
     
+    def test_func(self):
+        if not self.request.user.is_authenticated:
+            return True
+        obj = self.get_object()
+        return obj.author == self.request.user
+    
+    def get_login_url(self):
+        post_id = self.kwargs.get('post_id') or self.get_object().pk
+        return reverse('blog:post_detail', kwargs={'post_id': post_id})
+
 
 def user_profile(request, username):
     profile = get_object_or_404(User, username=username)
@@ -182,22 +193,39 @@ class CommentCreateView(LoginRequiredMixin, CreateView):
 
 class CommentUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Comment
+    form_class = CommentForm
     pk_url_kwarg = 'comment_id'
-    fields = ['text']
-
+    template_name = 'blog/comment.html'
+    raise_exception = False
+    login_url = None
+    
     def test_func(self):
-        return self.get_object().author == self.request.user
-
-    def get_success_url(self):
-        return reverse('blog:post_detail', kwargs={'post_id': self.object.post.pk})
-
+        if not self.request.user.is_authenticated:
+            return True
+        obj = self.get_object()
+        return obj.author == self.request.user
+    
+    def get_login_url(self):
+        comment = self.get_object()
+        return reverse('blog:post_detail', kwargs={'post_id': comment.post_id})
 
 class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Comment
     pk_url_kwarg = 'comment_id'
-
+    template_name = 'blog/comment.html'
+    raise_exception = False
+    login_url = None
+    
     def test_func(self):
-        return self.get_object().author == self.request.user
-
+        if not self.request.user.is_authenticated:
+            return True
+        obj = self.get_object()
+        return obj.author == self.request.user
+    
+    def get_login_url(self):
+        comment = self.get_object()
+        return reverse('blog:post_detail', kwargs={'post_id': comment.post_id})
+    
     def get_success_url(self):
-        return reverse('blog:post_detail', kwargs={'post_id': self.object.post.pk})
+        comment = self.get_object()
+        return reverse('blog:post_detail', kwargs={'post_id': comment.post_id})
