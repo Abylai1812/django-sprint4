@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.urls import include, path,reverse_lazy
+from django.urls import include, path, reverse_lazy
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -16,15 +16,15 @@ urlpatterns = [
     path(
         'auth/registration/',
         CreateView.as_view(
-            template_name = 'registration/registration_form.html',
+            template_name='registration/registration_form.html',
             form_class=UserCreationForm,
             success_url=reverse_lazy('blog:index'),
         ),
-        name='registration', 
-        ),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) 
+        name='registration',
+    ),
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
-handler404 = 'pages.views.page_not_found' 
+handler404 = 'pages.views.page_not_found'
 handler403 = 'pages.views.csrf_failure'
 handler500 = 'pages.views.server_error'
 
