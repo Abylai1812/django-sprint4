@@ -5,9 +5,7 @@ from django.db.models import Count
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone as tz
-from django.views.generic import (
-    CreateView, DeleteView, ListView, UpdateView
-)
+from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
 from blog.models import Category, Comment, Post
 from .forms import CommentForm, PostForm, UserForm
@@ -83,6 +81,31 @@ class OnlyAuthorMixin(UserPassesTestMixin):
         return obj.author == self.request.user
 
 
+class AuthorRequiredMixin(UserPassesTestMixin):
+    """
+    Ограничивает доступ к объекту только автору.
+    Если пользователь не автор → редирект.
+    """
+
+    raise_exception = False
+    login_url = None
+
+    def test_func(self):
+        if not self.request.user.is_authenticated:
+            return True
+        return self.get_object().author == self.request.user
+
+    def handle_no_permission(self):
+        return redirect(self.get_redirect_url())
+
+    def get_redirect_url(self):
+        """
+        Возвращает URL для редиректа.
+        В наследниках нужно переопределить.
+        """
+        raise NotImplementedError
+
+
 class PostMixin:
     model = Post
     form_class = PostForm
@@ -104,49 +127,29 @@ class PostCreateView(LoginRequiredMixin, PostMixin, CreateView):
 
 class PostUpdateView(
         LoginRequiredMixin,
-        UserPassesTestMixin,
+        AuthorRequiredMixin,
         PostMixin,
         UpdateView,
 ):
     pk_url_kwarg = 'post_id'
-    raise_exception = False
-    login_url = None
 
-    def test_func(self):
-        if not self.request.user.is_authenticated:
-            return True
-        obj = self.get_object()
-        return obj.author == self.request.user
-
-    def get_login_url(self):
-        post_id = self.kwargs.get('post_id') or self.get_object().pk
-        return reverse('blog:post_detail', kwargs={'post_id': post_id})
-
-    def handle_no_permission(self):
-        post_id = self.kwargs.get('post_id') or self.get_object().pk
-        return redirect('blog:post_detail', post_id=post_id)
+    def get_redirect_url(self):
+        return reverse(
+            'blog:post_detail',
+            kwargs={'post_id': self.get_object().pk}
+        )
 
 
-class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+class PostDeleteView(LoginRequiredMixin, AuthorRequiredMixin, DeleteView):
     model = Post
     pk_url_kwarg = 'post_id'
     success_url = reverse_lazy('blog:index')
-    raise_exception = False
-    login_url = None
 
-    def test_func(self):
-        if not self.request.user.is_authenticated:
-            return True
-        obj = self.get_object()
-        return obj.author == self.request.user
-
-    def get_login_url(self):
-        post_id = self.kwargs.get('post_id') or self.get_object().pk
-        return reverse('blog:post_detail', kwargs={'post_id': post_id})
-
-    def handle_no_permission(self):
-        post_id = self.kwargs.get('post_id') or self.get_object().pk
-        return redirect('blog:post_detail', post_id=post_id)
+    def get_redirect_url(self):
+        return reverse(
+            'blog:post_detail',
+            kwargs={'post_id': self.get_object().pk}
+        )
 
 
 def user_profile(request, username):
@@ -182,12 +185,6 @@ class ProfileUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         return get_object_or_404(User, username=username)
 
     def form_valid(self, form):
-        print("Form data:", form.cleaned_data)  # debug
-        if not form.is_valid():
-            print("Form errors:", form.errors)  # debug
-        else:
-            print("Form is valid, saving changes")  # debug
-            form.save()
         return super().form_valid(form)
 
     def get_success_url(self):
@@ -220,49 +217,29 @@ class CommentCreateView(LoginRequiredMixin, CreateView):
         )
 
 
-class CommentUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+class CommentUpdateView(LoginRequiredMixin, AuthorRequiredMixin, UpdateView):
     model = Comment
     form_class = CommentForm
     pk_url_kwarg = 'comment_id'
     template_name = 'blog/comment.html'
-    raise_exception = False
-    login_url = None
 
-    def test_func(self):
-        if not self.request.user.is_authenticated:
-            return True
-        obj = self.get_object()
-        return obj.author == self.request.user
-
-    def get_login_url(self):
-        comment = self.get_object()
-        return reverse('blog:post_detail', kwargs={'post_id': comment.post_id})
-
-    def handle_no_permission(self):
-        comment = self.get_object()
-        return redirect('blog:post_detail', post_id=comment.post_id)
+    def get_redirect_url(self):
+        return reverse(
+            'blog:post_detail',
+            kwargs={'post_id': self.get_object().post_id}
+        )
 
 
-class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+class CommentDeleteView(LoginRequiredMixin, AuthorRequiredMixin, DeleteView):
     model = Comment
     pk_url_kwarg = 'comment_id'
     template_name = 'blog/comment.html'
-    raise_exception = False
-    login_url = None
 
-    def test_func(self):
-        if not self.request.user.is_authenticated:
-            return True
-        obj = self.get_object()
-        return obj.author == self.request.user
-
-    def get_login_url(self):
-        comment = self.get_object()
-        return reverse('blog:post_detail', kwargs={'post_id': comment.post_id})
-
-    def handle_no_permission(self):
-        comment = self.get_object()
-        return redirect('blog:post_detail', post_id=comment.post_id)
+    def get_redirect_url(self):
+        return reverse(
+            'blog:post_detail',
+            kwargs={'post_id': self.get_object().post_id}
+        )
 
     def get_success_url(self):
         comment = self.get_object()
