@@ -8,7 +8,8 @@ from django.utils import timezone as tz
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
 from blog.models import Category, Comment, Post
-from .forms import CommentForm, PostForm, UserForm
+from blog.forms import CommentForm, PostForm, UserForm
+from blog.constans import PAGINATE_BY
 
 
 User = get_user_model()
@@ -29,7 +30,7 @@ def get_filter_posts(posts=Post.objects.all()):
 class IndexView(ListView):
     model = Post
     template_name = 'blog/index.html'
-    paginate_by = 10
+    paginate_by = PAGINATE_BY
 
     def get_queryset(self):
         return get_filter_posts()
@@ -67,7 +68,7 @@ def category_posts(request, category_slug):
         slug=category_slug
     )
     posts = get_filter_posts(Post.objects.filter(category=category))
-    paginator = Paginator(posts, 10)
+    paginator = Paginator(posts, PAGINATE_BY)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
@@ -159,7 +160,7 @@ def user_profile(request, username):
         .order_by('-pub_date')
         .annotate(comment_count=Count('comments'))
     )
-    paginator = Paginator(posts, 10)
+    paginator = Paginator(posts, PAGINATE_BY)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
