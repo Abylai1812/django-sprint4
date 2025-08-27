@@ -236,6 +236,7 @@ class CommentDeleteView(LoginRequiredMixin, AuthorRequiredMixin, DeleteView):
     pk_url_kwarg = 'comment_id'
     template_name = 'blog/comment.html'
 
+
     def get_redirect_url(self):
         return reverse(
             'blog:post_detail',

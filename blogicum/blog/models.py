@@ -123,3 +123,6 @@ class Comment(models.Model):
 
     def get_absolute_url(self):
         return reverse('blog:post_detail', kwargs={'post_id': self.post.pk})
+    
+    def __str__(self):
+        return self.title[:TITLE_DISPLAY_LENGTH]
