@@ -3,21 +3,6 @@ from django.contrib.auth.mixins import UserPassesTestMixin
 from django.shortcuts import redirect
 
 
-class OnlyAuthorMixin(UserPassesTestMixin):
-    """Миксин для проверки, что пользователь является автором объекта."""
-
-    def test_func(self):
-        obj = self.get_object()
-        return obj.author == self.request.user
-
-    def handle_no_permission(self):
-        messages.error(
-            self.request,
-            'У вас нет прав для выполнения этого действия.'
-        )
-        return redirect('blog:index')
-
-
 class AuthorRequiredMixin(UserPassesTestMixin):
     """Ограничивает доступ к объекту только автору."""
 
