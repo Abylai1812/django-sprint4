@@ -7,9 +7,10 @@ from django.utils import timezone as tz
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 from django.http import Http404
 
-from blog.constans import PAGINATE_BY
+
 from blog.models import Category, Comment, Post
 from blog.forms import CommentForm, PostForm, UserForm
+from blog.constans import PAGINATE_BY
 from blog.service import get_filter_posts, get_paginator
 from blog.mixins import AuthorRequiredMixin
 

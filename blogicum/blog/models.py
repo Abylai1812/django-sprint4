@@ -125,4 +125,4 @@ class Comment(models.Model):
         return reverse('blog:post_detail', kwargs={'post_id': self.post.pk})
 
     def __str__(self):
-        return self.title[:TITLE_DISPLAY_LENGTH]
+        return self.text[:TITLE_DISPLAY_LENGTH]
