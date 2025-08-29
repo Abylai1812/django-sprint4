@@ -157,25 +157,19 @@ class CommentCreateView(LoginRequiredMixin, CreateView):
     template_name = 'blog/comment.html'
 
     def form_valid(self, form):
-        post = get_object_or_404(Post, pk=self.kwargs['post_id'])
+        post = get_object_or_404(
+            get_filter_posts(Post.objects.all()),
+            pk=self.kwargs['post_id']
+        )
 
-        # Проверяем доступность поста для комментирования
-        if not (
-            post.is_published
-            and post.pub_date < tz.now()
-            and post.category.is_published
-        ):
-            if not (
-                self.request.user.is_authenticated
-                and post.author == self.request.user
-            ):
-                raise Http404("Пост не найден")
+        if post.author == self.request.user or post.is_published:
+            comment = form.save(commit=False)
+            comment.author = self.request.user
+            comment.post = post
+            comment.save()
+            return super().form_valid(form)
 
-        comment = form.save(commit=False)
-        comment.author = self.request.user
-        comment.post = post
-        comment.save()
-        return super().form_valid(form)
+        raise Http404(f"Пост с id={post.pk} недоступен для комментирования.")
 
     def get_success_url(self):
         return reverse(
