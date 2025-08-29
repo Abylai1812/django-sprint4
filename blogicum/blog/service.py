@@ -2,8 +2,8 @@ from django.core.paginator import Paginator
 from django.db.models import Count
 from django.utils import timezone as tz
 
-from blog.models import Post
 from blog.constans import PAGINATE_BY
+from blog.models import Post
 
 
 def get_filter_posts(

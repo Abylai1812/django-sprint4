@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.db import models
 from django.urls import reverse
 
-from blog.constans import TITLE_DISPLAY_LENGTH
+from blog.constans import TEXT_PREVIEW_LENGTH,TITLE_DISPLAY_LENGTH
 
 
 User = get_user_model()
@@ -110,19 +110,24 @@ class Comment(models.Model):
         related_name='comments',
         verbose_name='Комментарий'
     )
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата создания'
+    )
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='comments'
+        related_name='comments',
+        verbose_name='Автор'
     )
 
     class Meta:
         ordering = ('created_at',)
-        verbose_name = 'Комментарий'
+        verbose_name = 'Комментарий',
+        verbose_name_plural = 'Комментарий'
 
     def get_absolute_url(self):
         return reverse('blog:post_detail', kwargs={'post_id': self.post.pk})
 
     def __str__(self):
-        return self.text[:TITLE_DISPLAY_LENGTH]
+        return f'Комментарий {self.author.username} к "{self.post.title}": {self.text[:TEXT_PREVIEW_LENGTH]}'
