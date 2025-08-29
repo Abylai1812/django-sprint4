@@ -7,13 +7,11 @@ from django.utils import timezone as tz
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 from django.http import Http404
 
-
-from blog.models import Category, Comment, Post
-from blog.forms import CommentForm, PostForm, UserForm
 from blog.constans import PAGINATE_BY
-from blog.service import get_filter_posts, get_paginator
+from blog.forms import CommentForm, PostForm, UserForm
 from blog.mixins import AuthorRequiredMixin
-
+from blog.models import Category, Comment, Post
+from blog.service import get_filter_posts, get_paginator
 
 User = get_user_model()
 
@@ -34,15 +32,10 @@ def post_detail(request, post_id):
     )
 
     if not (
-        post.is_published
-        and post.pub_date < tz.now()
-        and post.category.is_published
+        (post.is_published and post.pub_date < tz.now() and post.category.is_published)
+        or (request.user.is_authenticated and post.author == request.user)
     ):
-        if not (
-            request.user.is_authenticated
-            and post.author == request.user
-        ):
-            raise Http404("Пост не найден")
+        raise Http404(f"Пост с id={post_id} не найден или недоступен.")
 
     form = CommentForm()
     context = {
@@ -51,6 +44,7 @@ def post_detail(request, post_id):
         'comments': post.comments.select_related('author')
     }
     return render(request, 'blog/detail.html', context)
+
 
 
 def category_posts(request, category_slug):
