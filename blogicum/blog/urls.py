@@ -30,7 +30,7 @@ urlpatterns = [
 
     # Профиль
     path(
-        'profile/<str:username>/edit/',
+        'profile/edit/',
         views.ProfileUpdateView.as_view(),
         name='edit_profile'
     ),
