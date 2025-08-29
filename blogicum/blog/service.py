@@ -12,23 +12,23 @@ def get_filter_posts(
     count_comments=True
 ):
     """Вспомогательная функция для фильтрации постов."""
-    queryset = posts
 
     if filter_published:
-        queryset = queryset.filter(
+        posts = posts.filter(
             is_published=True,
             pub_date__lt=tz.now(),
             category__is_published=True,
         )
 
     if count_comments:
-        queryset = queryset.annotate(comment_count=Count('comments'))
+        posts = posts.annotate(comment_count=Count('comments'))
 
-    return queryset.select_related(
+    return posts.select_related(
         'author',
         'category',
         'location'
     ).order_by('-pub_date')
+
 
 
 def get_paginator(request, queryset, per_page=PAGINATE_BY):
