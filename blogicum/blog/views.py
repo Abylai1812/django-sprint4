@@ -53,10 +53,14 @@ def category_posts(request, category_slug):
         Category.objects.filter(is_published=True),
         slug=category_slug
     )
-    posts = get_filter_posts(Post.objects.filter(category=category))
+
+    posts = get_filter_posts(category.posts.all())
     page_obj = get_paginator(request, posts, PAGINATE_BY)
 
-    context = {'category': category, 'page_obj': page_obj}
+    context = {
+        'category': category,
+        'page_obj': page_obj
+    }
     return render(request, template_name, context)
 
 
@@ -114,17 +118,16 @@ class PostDeleteView(LoginRequiredMixin, AuthorRequiredMixin, DeleteView):
 def user_profile(request, username):
     profile = get_object_or_404(User, username=username)
 
-    if request.user == profile:
-        # Автор видит все свои посты
-        posts = Post.objects.filter(author=profile)
-    else:
-        posts = get_filter_posts(Post.objects.filter(author=profile))
+    posts = profile.posts.all()
+
+    if request.user != profile:
+        posts = get_filter_posts(posts)
 
     posts = posts.select_related('category', 'location').annotate(
         comment_count=Count('comments')
     ).order_by('-pub_date')
 
-    page_obj = get_paginator(request, posts, )
+    page_obj = get_paginator(request, posts)
 
     context = {
         'profile': profile,
