@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.db import models
 from django.urls import reverse
 
-from blog.constans import TEXT_PREVIEW_LENGTH,TITLE_DISPLAY_LENGTH
+from blog.constans import TEXT_PREVIEW_LENGTH, TITLE_DISPLAY_LENGTH
 
 
 User = get_user_model()
@@ -130,4 +130,8 @@ class Comment(models.Model):
         return reverse('blog:post_detail', kwargs={'post_id': self.post.pk})
 
     def __str__(self):
-        return f'Комментарий {self.author.username} к "{self.post.title}": {self.text[:TEXT_PREVIEW_LENGTH]}'
+        return (
+            f'Комментарий {self.author.username} '
+            f'к "{self.post.title}": '
+            f'{self.text[:TEXT_PREVIEW_LENGTH]}'
+        )

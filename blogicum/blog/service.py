@@ -12,7 +12,6 @@ def get_filter_posts(
     count_comments=True
 ):
     """Вспомогательная функция для фильтрации постов."""
-
     if filter_published:
         posts = posts.filter(
             is_published=True,
@@ -28,7 +27,6 @@ def get_filter_posts(
         'category',
         'location'
     ).order_by('-pub_date')
-
 
 
 def get_paginator(request, queryset, per_page=PAGINATE_BY):

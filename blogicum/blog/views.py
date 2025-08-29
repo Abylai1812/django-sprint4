@@ -32,9 +32,13 @@ def post_detail(request, post_id):
     )
 
     if not (
-        (post.is_published and post.pub_date < tz.now() and post.category.is_published)
-        or (request.user.is_authenticated and post.author == request.user)
+        (post.is_published
+            and post.pub_date < tz.now()
+            and post.category.is_published)
+        or (request.user.is_authenticated
+            and post.author == request.user)
     ):
+
         raise Http404(f"Пост с id={post_id} не найден или недоступен.")
 
     form = CommentForm()
@@ -44,7 +48,6 @@ def post_detail(request, post_id):
         'comments': post.comments.select_related('author')
     }
     return render(request, 'blog/detail.html', context)
-
 
 
 def category_posts(request, category_slug):
