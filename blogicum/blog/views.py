@@ -121,14 +121,10 @@ class PostDeleteView(LoginRequiredMixin, AuthorRequiredMixin, DeleteView):
 def user_profile(request, username):
     profile = get_object_or_404(User, username=username)
 
-    posts = profile.posts.all()
-
-    if request.user != profile:
-        posts = get_filter_posts(posts)
-
-    posts = posts.select_related('category', 'location').annotate(
-        comment_count=Count('comments')
-    ).order_by('-pub_date')
+    posts = get_filter_posts(
+        profile.posts.all(),
+        filter_published=(request.user != profile)
+    )
 
     page_obj = get_paginator(request, posts)
 
@@ -137,6 +133,8 @@ def user_profile(request, username):
         'page_obj': page_obj
     }
     return render(request, 'blog/profile.html', context)
+
+
 
 
 class ProfileUpdateView(LoginRequiredMixin, UpdateView):
