@@ -132,6 +132,7 @@ class Comment(models.Model):
     def __str__(self):
         return (
             f'Комментарий {self.author.username} '
-            f'к "{self.post.title}": '
+            f'к "{self.post}": '
             f'{self.text[:TEXT_PREVIEW_LENGTH]}'
-        )
+    )
+
