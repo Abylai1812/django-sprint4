@@ -126,8 +126,6 @@ class Comment(models.Model):
         verbose_name = 'Комментарий',
         verbose_name_plural = 'Комментарий'
 
-    def get_absolute_url(self):
-        return reverse('blog:post_detail', kwargs={'post_id': self.post.pk})
 
     def __str__(self):
         return (

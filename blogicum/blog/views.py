@@ -135,8 +135,6 @@ def user_profile(request, username):
     return render(request, 'blog/profile.html', context)
 
 
-
-
 class ProfileUpdateView(LoginRequiredMixin, UpdateView):
     model = User
     form_class = UserForm
@@ -185,11 +183,16 @@ class CommentUpdateView(LoginRequiredMixin, AuthorRequiredMixin, UpdateView):
     pk_url_kwarg = 'comment_id'
     template_name = 'blog/comment.html'
 
-    def get_redirect_url(self):
-        comment = self.get_object()
+    def get_success_url(self):
         return reverse(
             'blog:post_detail',
-            kwargs={'post_id': comment.post.pk}
+            kwargs={'post_id': self.get_object().post.pk}
+        )
+
+    def get_redirect_url(self):
+        return reverse(
+            'blog:post_detail',
+            kwargs={'post_id': self.get_object().post.pk}
         )
 
 
@@ -198,13 +201,14 @@ class CommentDeleteView(LoginRequiredMixin, AuthorRequiredMixin, DeleteView):
     pk_url_kwarg = 'comment_id'
     template_name = 'blog/comment.html'
 
-    def get_redirect_url(self):
-        comment = self.get_object()
+    def get_success_url(self):
         return reverse(
             'blog:post_detail',
-            kwargs={'post_id': comment.post.pk}
+            kwargs={'post_id': self.get_object().post.pk}
         )
 
-    def get_success_url(self):
-        comment = self.get_object()
-        return reverse('blog:post_detail', kwargs={'post_id': comment.post.pk})
+    def get_redirect_url(self):
+        return reverse(
+            'blog:post_detail',
+            kwargs={'post_id': self.get_object().post.pk}
+        )
